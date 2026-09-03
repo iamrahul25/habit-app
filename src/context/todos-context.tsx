@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export interface Todo {
   id: string;
@@ -14,6 +14,7 @@ interface TodosContextType {
   addTodo: (name: string, icon: string) => void;
   toggleTodo: (id: string) => void;
   deleteTodo: (id: string) => void;
+  editTodo: (id: string, name: string, icon: string) => void;
 }
 
 const TODOS_KEY = '@habit_app_todos';
@@ -29,26 +30,30 @@ const TodosContext = createContext<TodosContextType | undefined>(undefined);
 export function TodosProvider({ children }: { children: React.ReactNode }) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  const isFirstLoad = useRef(true);
 
-  // Load on mount with daily reset logic
+  // Load from storage on mount
   useEffect(() => {
     (async () => {
       try {
         const today = todayString();
         const lastReset = await AsyncStorage.getItem(RESET_DATE_KEY);
         const stored = await AsyncStorage.getItem(TODOS_KEY);
-        const parsed: Todo[] = stored ? JSON.parse(stored) : [];
+        let parsed: Todo[] = [];
+        try { parsed = stored ? JSON.parse(stored) : []; } catch { parsed = []; }
 
         if (lastReset !== today) {
-          // New day — reset all to uncompleted but keep the tasks
+          // New day — reset completed flags and persist both keys atomically
           const reset = parsed.map((t) => ({ ...t, completed: false }));
+          await AsyncStorage.multiSet([
+            [RESET_DATE_KEY, today],
+            [TODOS_KEY, JSON.stringify(reset)],
+          ]);
           setTodos(reset);
-          await AsyncStorage.setItem(RESET_DATE_KEY, today);
         } else {
           setTodos(parsed);
         }
-      } catch {
+      } catch (e) {
+        console.warn('[TodosContext] Failed to load from AsyncStorage:', e);
         setTodos([]);
       } finally {
         setIsLoaded(true);
@@ -56,14 +61,13 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  // Persist on every change (skip the very first load-triggered set)
+  // Persist todos whenever they change — guarded by isLoaded so we never
+  // overwrite storage before the initial load has completed.
   useEffect(() => {
     if (!isLoaded) return;
-    if (isFirstLoad.current) {
-      isFirstLoad.current = false;
-      return;
-    }
-    AsyncStorage.setItem(TODOS_KEY, JSON.stringify(todos)).catch(() => {});
+    AsyncStorage.setItem(TODOS_KEY, JSON.stringify(todos)).catch((e) =>
+      console.warn('[TodosContext] Failed to save to AsyncStorage:', e)
+    );
   }, [todos, isLoaded]);
 
   const addTodo = (name: string, icon: string) => {
@@ -86,8 +90,14 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
     setTodos((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const editTodo = (id: string, name: string, icon: string) => {
+    setTodos((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, name: name.trim(), icon } : t))
+    );
+  };
+
   return (
-    <TodosContext.Provider value={{ todos, isLoaded, addTodo, toggleTodo, deleteTodo }}>
+    <TodosContext.Provider value={{ todos, isLoaded, addTodo, toggleTodo, deleteTodo, editTodo }}>
       {children}
     </TodosContext.Provider>
   );

@@ -9,7 +9,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useColorScheme,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -56,19 +55,15 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
 }
 
 function TodoItem({
-  id,
   name,
   icon,
   completed,
   onToggle,
-  onDelete,
 }: {
-  id: string;
   name: string;
   icon: string;
   completed: boolean;
   onToggle: () => void;
-  onDelete: () => void;
 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -87,26 +82,20 @@ function TodoItem({
         onPress={handleToggle}
         activeOpacity={0.8}
       >
-        <View style={styles.todoLeft}>
-          <View style={[styles.checkbox, completed && styles.checkboxDone]}>
-            {completed && <Text style={styles.checkmark}>✓</Text>}
-          </View>
-          <Text style={styles.todoIcon}>{icon}</Text>
-          <Text style={[styles.todoName, completed && styles.todoNameDone]}>{name}</Text>
+        <View style={[styles.checkbox, completed && styles.checkboxDone]}>
+          {completed && <Text style={styles.checkmark}>✓</Text>}
         </View>
-        <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} hitSlop={8}>
-          <Text style={styles.deleteBtnText}>✕</Text>
-        </TouchableOpacity>
+        <Text style={styles.todoIcon}>{icon}</Text>
+        <Text style={[styles.todoName, completed && styles.todoNameDone]}>{name}</Text>
       </TouchableOpacity>
     </Animated.View>
   );
 }
 
 export default function HomeScreen() {
-  const { todos, isLoaded, toggleTodo, deleteTodo } = useTodos();
+  const { todos, isLoaded, toggleTodo } = useTodos();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
 
   const done = todos.filter((t) => t.completed).length;
   const total = todos.length;
@@ -152,9 +141,10 @@ export default function HomeScreen() {
           todos.map((todo) => (
             <TodoItem
               key={todo.id}
-              {...todo}
+              name={todo.name}
+              icon={todo.icon}
+              completed={todo.completed}
               onToggle={() => toggleTodo(todo.id)}
-              onDelete={() => deleteTodo(todo.id)}
             />
           ))
         )}
@@ -162,7 +152,7 @@ export default function HomeScreen() {
 
       {/* Bottom nav */}
       <View style={[styles.bottomNav, { paddingBottom: insets.bottom + 8 }]}>
-        {/* Home tab */}
+        {/* Home tab — active */}
         <View style={styles.navItem}>
           <Text style={styles.navIconActive}>🏠</Text>
           <Text style={styles.navLabelActive}>Home</Text>
@@ -176,8 +166,11 @@ export default function HomeScreen() {
           <Text style={styles.addButtonText}>+</Text>
         </Pressable>
 
-        {/* Spacer to balance layout */}
-        <View style={styles.navItem} />
+        {/* Tasks tab */}
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/tasks')}>
+          <Text style={styles.navIcon}>📋</Text>
+          <Text style={styles.navLabel}>Tasks</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -298,14 +291,8 @@ const styles = StyleSheet.create({
   todoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 14,
     paddingVertical: 14,
-  },
-  todoLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
   },
   checkbox: {
     width: 24,
@@ -340,14 +327,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: SUBTEXT,
   },
-  deleteBtn: {
-    padding: 4,
-  },
-  deleteBtnText: {
-    fontSize: 14,
-    color: '#d1d5db',
-    fontWeight: '600',
-  },
   bottomNav: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -374,6 +353,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: PURPLE,
+    marginTop: 2,
+  },
+  navIcon: {
+    fontSize: 20,
+  },
+  navLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: SUBTEXT,
     marginTop: 2,
   },
   addButton: {

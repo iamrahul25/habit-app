@@ -6,8 +6,13 @@ export default function RootLayout() {
     <TodosProvider>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="tasks" options={{ headerShown: false }} />
         <Stack.Screen
           name="add-todo"
+          options={{ presentation: 'modal', headerShown: false }}
+        />
+        <Stack.Screen
+          name="edit-todo"
           options={{ presentation: 'modal', headerShown: false }}
         />
       </Stack>
