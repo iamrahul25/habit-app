@@ -1,10 +1,17 @@
 import { Stack } from 'expo-router';
+import { TodosProvider } from '@/context/todos-context';
 
 export default function RootLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-    </Stack>
+    <TodosProvider>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="add-todo"
+          options={{ presentation: 'modal', headerShown: false }}
+        />
+      </Stack>
+    </TodosProvider>
   );
 }
 
