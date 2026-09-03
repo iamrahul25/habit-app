@@ -5,25 +5,39 @@ export interface Todo {
   id: string;
   name: string;
   icon: string;
-  completed: boolean;
+  completions?: Record<string, boolean>;
+  completed?: boolean;
+}
+
+export function formatDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function isTodoCompleted(todo: Todo, dateKey?: string): boolean {
+  const key = dateKey || formatDateKey(new Date());
+  if (todo.completions && typeof todo.completions[key] === 'boolean') {
+    return todo.completions[key];
+  }
+  if (key === formatDateKey(new Date()) && typeof todo.completed === 'boolean') {
+    return todo.completed;
+  }
+  return false;
 }
 
 interface TodosContextType {
   todos: Todo[];
   isLoaded: boolean;
   addTodo: (name: string, icon: string) => void;
-  toggleTodo: (id: string) => void;
+  toggleTodo: (id: string, dateKey?: string) => void;
   deleteTodo: (id: string) => void;
   editTodo: (id: string, name: string, icon: string) => void;
+  isTodoCompleted: (todo: Todo, dateKey?: string) => boolean;
 }
 
 const TODOS_KEY = '@habit_app_todos';
-const RESET_DATE_KEY = '@habit_app_last_reset';
-
-function todayString() {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
 
 const TodosContext = createContext<TodosContextType | undefined>(undefined);
 
@@ -31,27 +45,29 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from storage on mount
+  // Load from storage on mount and migrate legacy data if needed
   useEffect(() => {
     (async () => {
       try {
-        const today = todayString();
-        const lastReset = await AsyncStorage.getItem(RESET_DATE_KEY);
         const stored = await AsyncStorage.getItem(TODOS_KEY);
-        let parsed: Todo[] = [];
+        let parsed: any[] = [];
         try { parsed = stored ? JSON.parse(stored) : []; } catch { parsed = []; }
 
-        if (lastReset !== today) {
-          // New day — reset completed flags and persist both keys atomically
-          const reset = parsed.map((t) => ({ ...t, completed: false }));
-          await AsyncStorage.multiSet([
-            [RESET_DATE_KEY, today],
-            [TODOS_KEY, JSON.stringify(reset)],
-          ]);
-          setTodos(reset);
-        } else {
-          setTodos(parsed);
-        }
+        const todayKey = formatDateKey(new Date());
+        const migrated: Todo[] = parsed.map((t) => {
+          const completions: Record<string, boolean> = { ...(t.completions || {}) };
+          if (typeof t.completed === 'boolean' && completions[todayKey] === undefined) {
+            completions[todayKey] = t.completed;
+          }
+          return {
+            id: String(t.id),
+            name: t.name,
+            icon: t.icon,
+            completions,
+          };
+        });
+
+        setTodos(migrated);
       } catch (e) {
         console.warn('[TodosContext] Failed to load from AsyncStorage:', e);
         setTodos([]);
@@ -61,8 +77,7 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  // Persist todos whenever they change — guarded by isLoaded so we never
-  // overwrite storage before the initial load has completed.
+  // Persist todos whenever they change
   useEffect(() => {
     if (!isLoaded) return;
     AsyncStorage.setItem(TODOS_KEY, JSON.stringify(todos)).catch((e) =>
@@ -75,14 +90,26 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
       id: Date.now().toString(),
       name: name.trim(),
       icon,
-      completed: false,
+      completions: {},
     };
     setTodos((prev) => [...prev, newTodo]);
   };
 
-  const toggleTodo = (id: string) => {
+  const toggleTodo = (id: string, dateKey?: string) => {
+    const targetDate = dateKey || formatDateKey(new Date());
     setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        const currentCompletions = t.completions || {};
+        const currentlyDone = isTodoCompleted(t, targetDate);
+        return {
+          ...t,
+          completions: {
+            ...currentCompletions,
+            [targetDate]: !currentlyDone,
+          },
+        };
+      })
     );
   };
 
@@ -97,7 +124,17 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <TodosContext.Provider value={{ todos, isLoaded, addTodo, toggleTodo, deleteTodo, editTodo }}>
+    <TodosContext.Provider
+      value={{
+        todos,
+        isLoaded,
+        addTodo,
+        toggleTodo,
+        deleteTodo,
+        editTodo,
+        isTodoCompleted,
+      }}
+    >
       {children}
     </TodosContext.Provider>
   );
@@ -108,3 +145,4 @@ export function useTodos() {
   if (!ctx) throw new Error('useTodos must be used within TodosProvider');
   return ctx;
 }
+
