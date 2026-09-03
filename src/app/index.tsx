@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
 import { formatDateKey, isTodoCompleted, useTodos } from '@/context/todos-context';
+import { InsightsModal } from '@/components/insights-modal';
 
 function getMonday(d: Date): Date {
   const date = new Date(d);
@@ -173,17 +174,20 @@ function TodoItem({
   icon,
   timeMinutes,
   completed,
+  disabled = false,
   onToggle,
 }: {
   name: string;
   icon: string;
   timeMinutes?: number;
   completed: boolean;
+  disabled?: boolean;
   onToggle: () => void;
 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handleToggle = () => {
+    if (disabled) return;
     Animated.sequence([
       Animated.timing(scaleAnim, { toValue: 0.95, duration: 80, useNativeDriver: true }),
       Animated.timing(scaleAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
@@ -192,20 +196,47 @@ function TodoItem({
   };
 
   return (
-    <Animated.View style={[styles.todoCard, { transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View
+      style={[
+        styles.todoCard,
+        { transform: [{ scale: scaleAnim }] },
+        disabled && styles.todoCardDisabled,
+      ]}
+    >
       <TouchableOpacity
         style={styles.todoRow}
         onPress={handleToggle}
-        activeOpacity={0.8}
+        activeOpacity={disabled ? 1 : 0.8}
+        disabled={disabled}
       >
-        <View style={[styles.checkbox, completed && styles.checkboxDone]}>
+        <View
+          style={[
+            styles.checkbox,
+            completed && styles.checkboxDone,
+            disabled && styles.checkboxDisabled,
+          ]}
+        >
           {completed && <Text style={styles.checkmark}>✓</Text>}
         </View>
-        <Text style={styles.todoIcon}>{icon}</Text>
+        <Text style={[styles.todoIcon, disabled && styles.todoIconDisabled]}>{icon}</Text>
         <View style={styles.todoInfoWrap}>
-          <Text style={[styles.todoName, completed && styles.todoNameDone]}>{name}</Text>
-          <View style={[styles.timeBadge, completed && styles.timeBadgeDone]}>
-            <Text style={[styles.timeBadgeText, completed && styles.timeBadgeTextDone]}>
+          <Text
+            style={[
+              styles.todoName,
+              completed && styles.todoNameDone,
+              disabled && styles.todoNameDisabled,
+            ]}
+          >
+            {name}
+          </Text>
+          <View
+            style={[
+              styles.timeBadge,
+              completed && styles.timeBadgeDone,
+              disabled && styles.timeBadgeDisabled,
+            ]}
+          >
+            <Text style={[styles.timeBadgeText, disabled && styles.timeBadgeTextDisabled]}>
               ⏱️ {timeMinutes ?? 30} min
             </Text>
           </View>
@@ -222,10 +253,15 @@ export default function HomeScreen() {
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [weekStartDate, setWeekStartDate] = useState<Date>(() => getMonday(new Date()));
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+
+  const currentWeekMonday = getMonday(new Date());
+  const isCurrentOrFutureWeek = weekStartDate.getTime() >= currentWeekMonday.getTime();
 
   const selectedDateKey = formatDateKey(selectedDate);
   const todayKey = formatDateKey(new Date());
   const isViewingToday = selectedDateKey === todayKey;
+  const isFutureDate = selectedDateKey > todayKey;
 
   const weekDays = getWeekDaysFromMonday(weekStartDate);
 
@@ -244,6 +280,7 @@ export default function HomeScreen() {
   };
 
   const goToNextWeek = () => {
+    if (weekStartDate.getTime() >= currentWeekMonday.getTime()) return;
     setWeekStartDate((prev) => {
       const next = new Date(prev);
       next.setDate(next.getDate() + 7);
@@ -281,6 +318,8 @@ export default function HomeScreen() {
 
   const progressLabel = isViewingToday
     ? "Today's Progress"
+    : isFutureDate
+    ? `${selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} (Upcoming)`
     : `${selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} Progress`;
 
   return (
@@ -301,11 +340,20 @@ export default function HomeScreen() {
               })}
             </Text>
           </View>
-          {!isViewingToday && (
-            <TouchableOpacity style={styles.todayButton} onPress={goToToday} activeOpacity={0.8}>
-              <Text style={styles.todayButtonText}>Today</Text>
+          <View style={styles.headerButtonsRow}>
+            <TouchableOpacity
+              style={styles.insightsButton}
+              onPress={() => setIsInsightsOpen(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.insightsButtonText}>📊 Insights</Text>
             </TouchableOpacity>
-          )}
+            {!isViewingToday && (
+              <TouchableOpacity style={styles.todayButton} onPress={goToToday} activeOpacity={0.8}>
+                <Text style={styles.todayButtonText}>Today</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Week navigation row */}
@@ -321,14 +369,18 @@ export default function HomeScreen() {
 
           <Text style={styles.weekRangeText}>{weekMonthYear}</Text>
 
-          <TouchableOpacity
-            style={styles.navArrowBtn}
-            onPress={goToNextWeek}
-            hitSlop={8}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.navArrowText}>›</Text>
-          </TouchableOpacity>
+          {!isCurrentOrFutureWeek ? (
+            <TouchableOpacity
+              style={styles.navArrowBtn}
+              onPress={goToNextWeek}
+              hitSlop={8}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.navArrowText}>›</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.navArrowPlaceholder} />
+          )}
         </View>
 
         {/* 7-day pill slider row */}
@@ -390,6 +442,13 @@ export default function HomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {isFutureDate && (
+          <View style={styles.futureNoticeBanner}>
+            <Text style={styles.futureNoticeText}>
+              🔒 Future date tasks cannot be checked off yet.
+            </Text>
+          </View>
+        )}
         {!isLoaded ? (
           <Text style={styles.emptyText}>Loading...</Text>
         ) : todos.length === 0 ? (
@@ -408,7 +467,12 @@ export default function HomeScreen() {
                 icon={todo.icon}
                 timeMinutes={todo.timeMinutes}
                 completed={completed}
-                onToggle={() => toggleTodo(todo.id, selectedDateKey)}
+                disabled={isFutureDate}
+                onToggle={() => {
+                  if (!isFutureDate) {
+                    toggleTodo(todo.id, selectedDateKey);
+                  }
+                }}
               />
             );
           })
@@ -437,6 +501,11 @@ export default function HomeScreen() {
           <Text style={styles.navLabel}>Tasks</Text>
         </TouchableOpacity>
       </View>
+      <InsightsModal
+        visible={isInsightsOpen}
+        onClose={() => setIsInsightsOpen(false)}
+        todos={todos}
+      />
     </View>
   );
 }
@@ -480,6 +549,25 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontWeight: '500',
   },
+  headerButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  insightsButton: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  insightsButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
   todayButton: {
     backgroundColor: 'rgba(255,255,255,0.22)',
     paddingHorizontal: 12,
@@ -515,6 +603,10 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '600',
     lineHeight: 24,
+  },
+  navArrowPlaceholder: {
+    width: 32,
+    height: 32,
   },
   weekRangeText: {
     color: '#ffffff',
@@ -667,6 +759,21 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: 'center',
   },
+  futureNoticeBanner: {
+    backgroundColor: '#eff6ff',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  futureNoticeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
   todoCard: {
     backgroundColor: CARD,
     borderRadius: 14,
@@ -707,23 +814,26 @@ const styles = StyleSheet.create({
   },
   todoInfoWrap: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   todoName: {
+    flex: 1,
     fontSize: 15,
     fontWeight: '600',
     color: TEXT,
+    marginRight: 8,
   },
   todoNameDone: {
     textDecorationLine: 'line-through',
     color: SUBTEXT,
   },
   timeBadge: {
-    alignSelf: 'flex-start',
     backgroundColor: '#f1f5f9',
     borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   timeBadgeDone: {
     backgroundColor: '#f8fafc',
@@ -734,8 +844,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#64748b',
   },
-  timeBadgeTextDone: {
-    textDecorationLine: 'line-through',
+  todoCardDisabled: {
+    opacity: 0.65,
+  },
+  checkboxDisabled: {
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f1f5f9',
+  },
+  todoIconDisabled: {
+    opacity: 0.5,
+  },
+  todoNameDisabled: {
+    color: '#64748b',
+  },
+  timeBadgeDisabled: {
+    backgroundColor: '#f8fafc',
+    opacity: 0.7,
+  },
+  timeBadgeTextDisabled: {
+    color: '#94a3b8',
   },
   bottomNav: {
     flexDirection: 'row',
