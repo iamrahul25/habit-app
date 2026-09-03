@@ -171,11 +171,13 @@ function ProgressBar({ done, total, label }: { done: number; total: number; labe
 function TodoItem({
   name,
   icon,
+  timeMinutes,
   completed,
   onToggle,
 }: {
   name: string;
   icon: string;
+  timeMinutes?: number;
   completed: boolean;
   onToggle: () => void;
 }) {
@@ -200,7 +202,14 @@ function TodoItem({
           {completed && <Text style={styles.checkmark}>✓</Text>}
         </View>
         <Text style={styles.todoIcon}>{icon}</Text>
-        <Text style={[styles.todoName, completed && styles.todoNameDone]}>{name}</Text>
+        <View style={styles.todoInfoWrap}>
+          <Text style={[styles.todoName, completed && styles.todoNameDone]}>{name}</Text>
+          <View style={[styles.timeBadge, completed && styles.timeBadgeDone]}>
+            <Text style={[styles.timeBadgeText, completed && styles.timeBadgeTextDone]}>
+              ⏱️ {timeMinutes ?? 30} min
+            </Text>
+          </View>
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -397,6 +406,7 @@ export default function HomeScreen() {
                 key={todo.id}
                 name={todo.name}
                 icon={todo.icon}
+                timeMinutes={todo.timeMinutes}
                 completed={completed}
                 onToggle={() => toggleTodo(todo.id, selectedDateKey)}
               />
@@ -695,15 +705,37 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginRight: 10,
   },
+  todoInfoWrap: {
+    flex: 1,
+  },
   todoName: {
     fontSize: 15,
     fontWeight: '600',
     color: TEXT,
-    flex: 1,
   },
   todoNameDone: {
     textDecorationLine: 'line-through',
     color: SUBTEXT,
+  },
+  timeBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginTop: 4,
+  },
+  timeBadgeDone: {
+    backgroundColor: '#f8fafc',
+    opacity: 0.6,
+  },
+  timeBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  timeBadgeTextDone: {
+    textDecorationLine: 'line-through',
   },
   bottomNav: {
     flexDirection: 'row',

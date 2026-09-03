@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -23,6 +24,8 @@ const ICONS = [
   '📝', '🛁', '🪴', '🎮', '📸', '🤝',
 ];
 
+const TIME_PRESETS = [15, 30, 45, 60];
+
 const DEFAULT_ICON = '✅';
 
 export default function AddTodoScreen() {
@@ -31,13 +34,16 @@ export default function AddTodoScreen() {
   const { addTodo } = useTodos();
 
   const [name, setName] = useState('');
+  const [time, setTime] = useState('30');
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
 
   const canAdd = name.trim().length > 0;
 
   const handleAdd = () => {
     if (!canAdd) return;
-    addTodo(name.trim(), selectedIcon ?? DEFAULT_ICON);
+    const parsed = parseInt(time.trim(), 10);
+    const minutes = !isNaN(parsed) && parsed > 0 ? parsed : 30;
+    addTodo(name.trim(), selectedIcon ?? DEFAULT_ICON, minutes);
     router.back();
   };
 
@@ -55,7 +61,12 @@ export default function AddTodoScreen() {
         <View style={{ width: 36 }} />
       </View>
 
-      <View style={styles.body}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Task name input */}
         <Text style={styles.sectionLabel}>Task name</Text>
         <TextInput
@@ -69,8 +80,54 @@ export default function AddTodoScreen() {
           autoFocus
         />
 
+        {/* Time duration input */}
+        <View style={styles.timeSectionHeader}>
+          <Text style={styles.sectionLabel}>Time to complete</Text>
+          <Text style={styles.timeDefaultHint}>(default 30 min)</Text>
+        </View>
+
+        <View style={styles.timeInputRow}>
+          <View style={styles.timeInputWrap}>
+            <Text style={styles.timeInputPrefix}>⏱️</Text>
+            <TextInput
+              style={styles.timeInput}
+              placeholder="30"
+              placeholderTextColor="#9ca3af"
+              value={time}
+              onChangeText={setTime}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+            <Text style={styles.timeInputSuffix}>min</Text>
+          </View>
+
+          {/* Quick preset chips */}
+          <View style={styles.presetsRow}>
+            {TIME_PRESETS.map((preset) => {
+              const isSelected = time.trim() === String(preset);
+              return (
+                <TouchableOpacity
+                  key={preset}
+                  style={[styles.presetChip, isSelected && styles.presetChipSelected]}
+                  onPress={() => setTime(String(preset))}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.presetChipText,
+                      isSelected && styles.presetChipTextSelected,
+                    ]}
+                  >
+                    {preset}m
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {/* Icon picker */}
-        <Text style={styles.sectionLabel}>Pick an icon</Text>
+        <Text style={[styles.sectionLabel, { marginTop: 8 }]}>Pick an icon</Text>
         <FlatList
           data={ICONS}
           keyExtractor={(item) => item}
@@ -89,10 +146,7 @@ export default function AddTodoScreen() {
           )}
           contentContainerStyle={styles.iconGrid}
         />
-
-
-
-      </View>
+      </ScrollView>
 
       {/* Add button */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
@@ -147,10 +201,13 @@ const styles = StyleSheet.create({
     color: SUBTEXT,
     fontWeight: '600',
   },
-  body: {
+  scroll: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 20,
+    paddingBottom: 24,
   },
   sectionLabel: {
     fontSize: 13,
@@ -158,7 +215,7 @@ const styles = StyleSheet.create({
     color: SUBTEXT,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: '#f9fafb',
@@ -169,7 +226,76 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     color: TEXT,
-    marginBottom: 24,
+    marginBottom: 18,
+  },
+  timeSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timeDefaultHint: {
+    fontSize: 12,
+    color: '#9ca3af',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  timeInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 18,
+  },
+  timeInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderWidth: 1.5,
+    borderColor: BORDER,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
+    flex: 1,
+  },
+  timeInputPrefix: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  timeInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    color: TEXT,
+    paddingVertical: 0,
+  },
+  timeInputSuffix: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: SUBTEXT,
+    marginLeft: 4,
+  },
+  presetsRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  presetChip: {
+    backgroundColor: '#f3f4f6',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
+  },
+  presetChipSelected: {
+    backgroundColor: PURPLE_LIGHT,
+    borderColor: PURPLE,
+  },
+  presetChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: SUBTEXT,
+  },
+  presetChipTextSelected: {
+    color: PURPLE,
   },
   iconGrid: {
     gap: 8,
@@ -192,8 +318,6 @@ const styles = StyleSheet.create({
   iconEmoji: {
     fontSize: 24,
   },
-
-
   footer: {
     paddingHorizontal: 20,
     paddingTop: 12,
@@ -216,3 +340,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 });
+

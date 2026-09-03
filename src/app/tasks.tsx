@@ -19,12 +19,14 @@ function TaskManageItem({
   id,
   name,
   icon,
+  timeMinutes,
   onEdit,
   onDelete,
 }: {
   id: string;
   name: string;
   icon: string;
+  timeMinutes?: number;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -51,12 +53,17 @@ function TaskManageItem({
   return (
     <Animated.View style={[styles.taskCard, { transform: [{ scale: scaleAnim }] }]}>
       <View style={styles.taskRow}>
-        {/* Icon + name */}
+        {/* Icon + name + time */}
         <View style={styles.taskLeft}>
           <Text style={styles.taskIcon}>{icon}</Text>
-          <Text style={styles.taskName} numberOfLines={1}>
-            {name}
-          </Text>
+          <View style={styles.taskNameWrap}>
+            <Text style={styles.taskName} numberOfLines={1}>
+              {name}
+            </Text>
+            <View style={styles.timeBadge}>
+              <Text style={styles.timeBadgeText}>⏱️ {timeMinutes ?? 30} min</Text>
+            </View>
+          </View>
         </View>
 
         {/* Actions */}
@@ -126,6 +133,7 @@ export default function TasksScreen() {
               id={todo.id}
               name={todo.name}
               icon={todo.icon}
+              timeMinutes={todo.timeMinutes}
               onEdit={() =>
                 router.push({ pathname: '/edit-todo', params: { id: todo.id } })
               }
@@ -257,6 +265,19 @@ const styles = StyleSheet.create({
   taskNameDone: {
     color: SUBTEXT,
     textDecorationLine: 'line-through',
+  },
+  timeBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginTop: 4,
+  },
+  timeBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748b',
   },
   taskStatus: {
     fontSize: 12,

@@ -5,6 +5,7 @@ export interface Todo {
   id: string;
   name: string;
   icon: string;
+  timeMinutes?: number;
   completions?: Record<string, boolean>;
   completed?: boolean;
 }
@@ -30,10 +31,10 @@ export function isTodoCompleted(todo: Todo, dateKey?: string): boolean {
 interface TodosContextType {
   todos: Todo[];
   isLoaded: boolean;
-  addTodo: (name: string, icon: string) => void;
+  addTodo: (name: string, icon: string, timeMinutes?: number) => void;
   toggleTodo: (id: string, dateKey?: string) => void;
   deleteTodo: (id: string) => void;
-  editTodo: (id: string, name: string, icon: string) => void;
+  editTodo: (id: string, name: string, icon: string, timeMinutes?: number) => void;
   isTodoCompleted: (todo: Todo, dateKey?: string) => boolean;
 }
 
@@ -59,10 +60,13 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
           if (typeof t.completed === 'boolean' && completions[todayKey] === undefined) {
             completions[todayKey] = t.completed;
           }
+          const timeMinutes =
+            typeof t.timeMinutes === 'number' && t.timeMinutes > 0 ? t.timeMinutes : 30;
           return {
             id: String(t.id),
             name: t.name,
             icon: t.icon,
+            timeMinutes,
             completions,
           };
         });
@@ -85,11 +89,16 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
     );
   }, [todos, isLoaded]);
 
-  const addTodo = (name: string, icon: string) => {
+  const addTodo = (name: string, icon: string, timeMinutes?: number) => {
+    const minutes =
+      typeof timeMinutes === 'number' && !isNaN(timeMinutes) && timeMinutes > 0
+        ? timeMinutes
+        : 30;
     const newTodo: Todo = {
       id: Date.now().toString(),
       name: name.trim(),
       icon,
+      timeMinutes: minutes,
       completions: {},
     };
     setTodos((prev) => [...prev, newTodo]);
@@ -117,9 +126,15 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
     setTodos((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const editTodo = (id: string, name: string, icon: string) => {
+  const editTodo = (id: string, name: string, icon: string, timeMinutes?: number) => {
+    const minutes =
+      typeof timeMinutes === 'number' && !isNaN(timeMinutes) && timeMinutes > 0
+        ? timeMinutes
+        : 30;
     setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, name: name.trim(), icon } : t))
+      prev.map((t) =>
+        t.id === id ? { ...t, name: name.trim(), icon, timeMinutes: minutes } : t
+      )
     );
   };
 
