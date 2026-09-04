@@ -13,7 +13,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTodos } from '@/context/todos-context';
-import { BottomNav } from '@/components/bottom-nav';
 
 function TaskManageItem({
   id,
@@ -142,21 +141,16 @@ export default function TasksScreen() {
           ))
         )}
       </ScrollView>
-
-      {/* Bottom nav */}
-      <BottomNav activeTab="tasks" />
     </View>
   );
 }
 
 const PURPLE = '#6366f1';
-const PURPLE_DARK = '#4f46e5';
 const BG = '#f8f7ff';
 const CARD = '#ffffff';
 const TEXT = '#1e1b4b';
 const SUBTEXT = '#6b7280';
 const GREEN = '#10b981';
-const RED = '#ef4444';
 
 const styles = StyleSheet.create({
   root: {
@@ -242,10 +236,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: TEXT,
   },
-  taskNameDone: {
-    color: SUBTEXT,
-    textDecorationLine: 'line-through',
-  },
   timeBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#f1f5f9',
@@ -258,15 +248,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#64748b',
-  },
-  taskStatus: {
-    fontSize: 12,
-    color: SUBTEXT,
-    marginTop: 2,
-  },
-  taskStatusDone: {
-    color: GREEN,
-    fontWeight: '600',
   },
   taskActions: {
     flexDirection: 'row',
@@ -294,62 +275,5 @@ const styles = StyleSheet.create({
   },
   deleteBtnText: {
     fontSize: 16,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: CARD,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    paddingTop: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 10,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navIcon: {
-    fontSize: 20,
-  },
-  navLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: SUBTEXT,
-    marginTop: 2,
-  },
-  navIconActive: {
-    fontSize: 20,
-  },
-  navLabelActive: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: PURPLE,
-    marginTop: 2,
-  },
-  addButton: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: PURPLE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    shadowColor: PURPLE_DARK,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  addButtonText: {
-    fontSize: 30,
-    color: '#fff',
-    fontWeight: '300',
-    lineHeight: 34,
   },
 });

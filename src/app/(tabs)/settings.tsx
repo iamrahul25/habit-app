@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BottomNav } from '@/components/bottom-nav';
 import { useTodos } from '@/context/todos-context';
 
 export default function SettingsScreen() {
@@ -339,9 +338,6 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* Bottom Nav */}
-      <BottomNav activeTab="settings" />
 
       {/* MODAL 1: View Raw JSON */}
       <Modal visible={isViewJsonOpen} animationType="slide" transparent>

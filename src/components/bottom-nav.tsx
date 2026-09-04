@@ -5,12 +5,32 @@ import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface BottomNavProps {
-  activeTab: 'home' | 'tasks' | 'settings';
+  activeTab?: 'home' | 'tasks' | 'settings';
+  state?: any;
+  navigation?: any;
 }
 
-export function BottomNav({ activeTab }: BottomNavProps) {
+export function BottomNav({ activeTab: propsActiveTab, state, navigation }: BottomNavProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // Determine active tab route name dynamically from Tabs state or prop
+  let currentTab = propsActiveTab || 'home';
+  if (state && state.routes && typeof state.index === 'number') {
+    const routeName = state.routes[state.index]?.name;
+    if (routeName === 'index') currentTab = 'home';
+    else if (routeName === 'tasks') currentTab = 'tasks';
+    else if (routeName === 'settings') currentTab = 'settings';
+  }
+
+  const navigateToTab = (tabName: 'index' | 'tasks' | 'settings') => {
+    if (navigation) {
+      navigation.navigate(tabName);
+    } else {
+      const targetRoute = tabName === 'index' ? '/' : `/${tabName}`;
+      router.replace(targetRoute as any);
+    }
+  };
 
   return (
     <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}>
@@ -18,17 +38,17 @@ export function BottomNav({ activeTab }: BottomNavProps) {
         {/* 1. Home Tab */}
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => activeTab !== 'home' && router.push('/')}
+          onPress={() => currentTab !== 'home' && navigateToTab('index')}
           activeOpacity={0.7}
         >
-          <View style={[styles.iconWrap, activeTab === 'home' && styles.iconWrapActive]}>
+          <View style={[styles.iconWrap, currentTab === 'home' && styles.iconWrapActive]}>
             <Home
               size={22}
-              color={activeTab === 'home' ? PURPLE : INACTIVE_COLOR}
-              strokeWidth={activeTab === 'home' ? 2.5 : 2}
+              color={currentTab === 'home' ? PURPLE : INACTIVE_COLOR}
+              strokeWidth={currentTab === 'home' ? 2.5 : 2}
             />
           </View>
-          <Text style={activeTab === 'home' ? styles.navLabelActive : styles.navLabel}>
+          <Text style={currentTab === 'home' ? styles.navLabelActive : styles.navLabel}>
             Home
           </Text>
         </TouchableOpacity>
@@ -36,17 +56,17 @@ export function BottomNav({ activeTab }: BottomNavProps) {
         {/* 2. Tasks Tab */}
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => activeTab !== 'tasks' && router.push('/tasks')}
+          onPress={() => currentTab !== 'tasks' && navigateToTab('tasks')}
           activeOpacity={0.7}
         >
-          <View style={[styles.iconWrap, activeTab === 'tasks' && styles.iconWrapActive]}>
+          <View style={[styles.iconWrap, currentTab === 'tasks' && styles.iconWrapActive]}>
             <ListTodo
               size={22}
-              color={activeTab === 'tasks' ? PURPLE : INACTIVE_COLOR}
-              strokeWidth={activeTab === 'tasks' ? 2.5 : 2}
+              color={currentTab === 'tasks' ? PURPLE : INACTIVE_COLOR}
+              strokeWidth={currentTab === 'tasks' ? 2.5 : 2}
             />
           </View>
-          <Text style={activeTab === 'tasks' ? styles.navLabelActive : styles.navLabel}>
+          <Text style={currentTab === 'tasks' ? styles.navLabelActive : styles.navLabel}>
             Tasks
           </Text>
         </TouchableOpacity>
@@ -67,17 +87,17 @@ export function BottomNav({ activeTab }: BottomNavProps) {
         {/* 4. Setting Tab */}
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => activeTab !== 'settings' && router.push('/settings')}
+          onPress={() => currentTab !== 'settings' && navigateToTab('settings')}
           activeOpacity={0.7}
         >
-          <View style={[styles.iconWrap, activeTab === 'settings' && styles.iconWrapActive]}>
+          <View style={[styles.iconWrap, currentTab === 'settings' && styles.iconWrapActive]}>
             <Settings
               size={22}
-              color={activeTab === 'settings' ? PURPLE : INACTIVE_COLOR}
-              strokeWidth={activeTab === 'settings' ? 2.5 : 2}
+              color={currentTab === 'settings' ? PURPLE : INACTIVE_COLOR}
+              strokeWidth={currentTab === 'settings' ? 2.5 : 2}
             />
           </View>
-          <Text style={activeTab === 'settings' ? styles.navLabelActive : styles.navLabel}>
+          <Text style={currentTab === 'settings' ? styles.navLabelActive : styles.navLabel}>
             Setting
           </Text>
         </TouchableOpacity>

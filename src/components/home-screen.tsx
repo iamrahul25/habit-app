@@ -14,7 +14,6 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { formatDateKey, isTodoCompleted, useTodos } from '@/context/todos-context';
 import { InsightsModal } from '@/components/insights-modal';
-import { BottomNav } from '@/components/bottom-nav';
 import { TodoItem } from '@/components/todo-item';
 
 function getMonday(d: Date): Date {
@@ -391,8 +390,6 @@ export function HomeScreen() {
         )}
       </ScrollView>
 
-      {/* Bottom nav */}
-      <BottomNav activeTab="home" />
       <InsightsModal
         visible={isInsightsOpen}
         onClose={() => setIsInsightsOpen(false)}
