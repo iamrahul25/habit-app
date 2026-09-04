@@ -218,6 +218,12 @@ interface TodosContextType {
   deleteTodo: (id: string) => void;
   editTodo: (id: string, name: string, icon: string, timeMinutes?: number) => void;
   isTodoCompleted: (todo: Todo, dateKey?: string) => boolean;
+  exportData: () => string;
+  importData: (
+    rawJson: string,
+    mode: 'merge' | 'replace'
+  ) => { success: boolean; count: number; error?: string };
+  clearAllData: () => void;
 }
 
 const TODOS_KEY = '@habit_app_todos';
@@ -322,6 +328,148 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const exportData = (): string => {
+    const payload = {
+      appName: 'Habit Tracker App',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      todos,
+    };
+    return JSON.stringify(payload, null, 2);
+  };
+
+  const importData = (
+    rawJson: string,
+    mode: 'merge' | 'replace'
+  ): { success: boolean; count: number; error?: string } => {
+    try {
+      let parsed: any;
+      try {
+        parsed = JSON.parse(rawJson);
+      } catch {
+        return {
+          success: false,
+          count: 0,
+          error: 'Invalid JSON format. Please paste or choose a valid JSON file.',
+        };
+      }
+
+      let candidateTodos: any[] = [];
+      if (Array.isArray(parsed)) {
+        candidateTodos = parsed;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.todos)) {
+        candidateTodos = parsed.todos;
+      } else {
+        return {
+          success: false,
+          count: 0,
+          error: 'JSON must contain an array of habits or an object with a "todos" array.',
+        };
+      }
+
+      if (candidateTodos.length === 0) {
+        return {
+          success: false,
+          count: 0,
+          error: 'No habit items found in the imported JSON.',
+        };
+      }
+
+      const validImportedTodos: Todo[] = [];
+      for (let i = 0; i < candidateTodos.length; i++) {
+        const item = candidateTodos[i];
+        if (
+          !item ||
+          typeof item !== 'object' ||
+          typeof item.name !== 'string' ||
+          !item.name.trim()
+        ) {
+          continue;
+        }
+        const timeMinutes =
+          typeof item.timeMinutes === 'number' && item.timeMinutes > 0 ? item.timeMinutes : 30;
+        const completions: Record<string, boolean> =
+          item.completions && typeof item.completions === 'object'
+            ? { ...item.completions }
+            : {};
+
+        validImportedTodos.push({
+          id: item.id ? String(item.id) : `${Date.now()}_${i}`,
+          name: String(item.name).trim(),
+          icon: item.icon ? String(item.icon) : '📝',
+          timeMinutes,
+          createdAt: item.createdAt ? String(item.createdAt) : new Date().toISOString(),
+          completions,
+        });
+      }
+
+      if (validImportedTodos.length === 0) {
+        return {
+          success: false,
+          count: 0,
+          error: 'Could not extract valid habit records from the JSON.',
+        };
+      }
+
+      if (mode === 'replace') {
+        setTodos(validImportedTodos);
+        return { success: true, count: validImportedTodos.length };
+      } else {
+        // Merge mode
+        setTodos((prev) => {
+          const prevMap = new Map<string, Todo>();
+          prev.forEach((t) =>
+            prevMap.set(t.id, { ...t, completions: { ...(t.completions || {}) } })
+          );
+
+          validImportedTodos.forEach((imp) => {
+            if (prevMap.has(imp.id)) {
+              const existing = prevMap.get(imp.id)!;
+              prevMap.set(imp.id, {
+                ...existing,
+                name: imp.name || existing.name,
+                icon: imp.icon || existing.icon,
+                timeMinutes: imp.timeMinutes || existing.timeMinutes,
+                completions: {
+                  ...(existing.completions || {}),
+                  ...(imp.completions || {}),
+                },
+              });
+            } else {
+              const existingByName = Array.from(prevMap.values()).find(
+                (t) => t.name.toLowerCase() === imp.name.toLowerCase()
+              );
+              if (existingByName) {
+                prevMap.set(existingByName.id, {
+                  ...existingByName,
+                  completions: {
+                    ...(existingByName.completions || {}),
+                    ...(imp.completions || {}),
+                  },
+                });
+              } else {
+                prevMap.set(imp.id, imp);
+              }
+            }
+          });
+
+          return Array.from(prevMap.values());
+        });
+        return { success: true, count: validImportedTodos.length };
+      }
+    } catch (err: any) {
+      return {
+        success: false,
+        count: 0,
+        error: err?.message || 'An error occurred during JSON import.',
+      };
+    }
+  };
+
+  const clearAllData = () => {
+    setTodos([]);
+  };
+
   return (
     <TodosContext.Provider
       value={{
@@ -332,6 +480,9 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
         deleteTodo,
         editTodo,
         isTodoCompleted,
+        exportData,
+        importData,
+        clearAllData,
       }}
     >
       {children}

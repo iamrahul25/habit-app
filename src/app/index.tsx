@@ -15,6 +15,7 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { formatDateKey, isTodoCompleted, useTodos } from '@/context/todos-context';
 import { InsightsModal } from '@/components/insights-modal';
+import { BottomNav } from '@/components/bottom-nav';
 
 function getMonday(d: Date): Date {
   const date = new Date(d);
@@ -480,27 +481,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Bottom nav */}
-      <View style={[styles.bottomNav, { paddingBottom: insets.bottom + 8 }]}>
-        {/* Home tab — active */}
-        <View style={styles.navItem}>
-          <Text style={styles.navIconActive}>🏠</Text>
-          <Text style={styles.navLabelActive}>Home</Text>
-        </View>
-
-        {/* Add button */}
-        <Pressable
-          style={({ pressed }) => [styles.addButton, pressed && { transform: [{ scale: 0.92 }] }]}
-          onPress={() => router.push('/add-todo')}
-        >
-          <Text style={styles.addButtonText}>+</Text>
-        </Pressable>
-
-        {/* Tasks tab */}
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/tasks')}>
-          <Text style={styles.navIcon}>📋</Text>
-          <Text style={styles.navLabel}>Tasks</Text>
-        </TouchableOpacity>
-      </View>
+      <BottomNav activeTab="home" />
       <InsightsModal
         visible={isInsightsOpen}
         onClose={() => setIsInsightsOpen(false)}

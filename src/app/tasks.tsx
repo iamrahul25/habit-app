@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTodos } from '@/context/todos-context';
+import { BottomNav } from '@/components/bottom-nav';
 
 function TaskManageItem({
   id,
@@ -144,27 +145,7 @@ export default function TasksScreen() {
       </ScrollView>
 
       {/* Bottom nav */}
-      <View style={[styles.bottomNav, { paddingBottom: insets.bottom + 8 }]}>
-        {/* Home tab */}
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-
-        {/* Add button */}
-        <Pressable
-          style={({ pressed }) => [styles.addButton, pressed && { transform: [{ scale: 0.92 }] }]}
-          onPress={() => router.push('/add-todo')}
-        >
-          <Text style={styles.addButtonText}>+</Text>
-        </Pressable>
-
-        {/* Tasks tab — active */}
-        <View style={styles.navItem}>
-          <Text style={styles.navIconActive}>📋</Text>
-          <Text style={styles.navLabelActive}>Tasks</Text>
-        </View>
-      </View>
+      <BottomNav activeTab="tasks" />
     </View>
   );
 }
