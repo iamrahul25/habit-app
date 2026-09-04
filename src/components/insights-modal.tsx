@@ -10,7 +10,19 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getTodoInsights, Todo } from '@/context/todos-context';
+import { formatDateKey, getMonday, getTodoInsights, isTodoCompleted, Todo } from '@/context/todos-context';
+
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+function getWeekDaysFromMonday(monday: Date): Date[] {
+  const days: Date[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
 
 interface InsightsModalProps {
   visible: boolean;
@@ -20,6 +32,10 @@ interface InsightsModalProps {
 
 function ActivityInsightCard({ todo }: { todo: Todo }) {
   const insights = getTodoInsights(todo);
+  const now = new Date();
+  const todayKey = formatDateKey(now);
+  const monday = getMonday(now);
+  const weekDays = getWeekDaysFromMonday(monday);
 
   return (
     <View style={styles.card}>
@@ -93,6 +109,53 @@ function ActivityInsightCard({ todo }: { todo: Todo }) {
           <Text style={styles.timeframeValue}>
             {insights.allTimeCompleted} / {insights.allTimeTotal}
           </Text>
+        </View>
+      </View>
+
+      {/* 7-Day Week History Section */}
+      <View style={styles.weekHistorySection}>
+        <Text style={styles.weekHistoryTitle}>📅 7-Day Week History (Mon - Sun)</Text>
+        <View style={styles.weekHistoryRow}>
+          {weekDays.map((day, index) => {
+            const dayKey = formatDateKey(day);
+            const isCompleted = isTodoCompleted(todo, dayKey);
+            const isToday = dayKey === todayKey;
+            const isFuture = dayKey > todayKey;
+
+            return (
+              <View
+                key={dayKey}
+                style={[
+                  styles.historyPill,
+                  isToday && styles.historyPillToday,
+                ]}
+              >
+                <Text style={[styles.historyDayLabel, isToday && styles.historyDayLabelToday]}>
+                  {DAY_LABELS[index]}
+                </Text>
+
+                <View
+                  style={[
+                    styles.historyBadge,
+                    isCompleted && styles.historyBadgeDone,
+                    !isCompleted && !isFuture && styles.historyBadgeMissed,
+                    isFuture && styles.historyBadgeFuture,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.historyBadgeText,
+                      isCompleted && styles.historyBadgeTextDone,
+                      !isCompleted && !isFuture && styles.historyBadgeTextMissed,
+                      isFuture && styles.historyBadgeTextFuture,
+                    ]}
+                  >
+                    {isCompleted ? '✓' : isFuture ? '-' : '✕'}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
         </View>
       </View>
     </View>
@@ -429,5 +492,76 @@ const styles = StyleSheet.create({
     color: TEXT_MUTED,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  weekHistorySection: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  weekHistoryTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: TEXT_MUTED,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  weekHistoryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  historyPill: {
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    backgroundColor: '#f8fafc',
+    minWidth: 38,
+  },
+  historyPillToday: {
+    backgroundColor: '#eef2ff',
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+  },
+  historyDayLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  historyDayLabelToday: {
+    color: PRIMARY,
+    fontWeight: '800',
+  },
+  historyBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  historyBadgeDone: {
+    backgroundColor: '#10b981',
+  },
+  historyBadgeMissed: {
+    backgroundColor: '#fee2e2',
+  },
+  historyBadgeFuture: {
+    backgroundColor: '#e2e8f0',
+  },
+  historyBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  historyBadgeTextDone: {
+    color: '#ffffff',
+  },
+  historyBadgeTextMissed: {
+    color: '#ef4444',
+  },
+  historyBadgeTextFuture: {
+    color: '#94a3b8',
   },
 });

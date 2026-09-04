@@ -9,7 +9,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -31,7 +30,7 @@ function TaskManageItem({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1));
 
   const handleDelete = () => {
     Alert.alert(
@@ -45,14 +44,14 @@ function TaskManageItem({
   };
 
   const handlePressIn = () => {
-    Animated.timing(scaleAnim, { toValue: 0.98, duration: 60, useNativeDriver: true }).start();
+    Animated.timing(scaleAnim.current, { toValue: 0.98, duration: 60, useNativeDriver: true }).start();
   };
   const handlePressOut = () => {
-    Animated.timing(scaleAnim, { toValue: 1, duration: 60, useNativeDriver: true }).start();
+    Animated.timing(scaleAnim.current, { toValue: 1, duration: 60, useNativeDriver: true }).start();
   };
 
   return (
-    <Animated.View style={[styles.taskCard, { transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View style={[styles.taskCard, { transform: [{ scale: scaleAnim.current }] }]}>
       <View style={styles.taskRow}>
         {/* Icon + name + time */}
         <View style={styles.taskLeft}>
