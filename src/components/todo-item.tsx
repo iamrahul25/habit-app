@@ -1,3 +1,4 @@
+import { Clock } from 'lucide-react-native';
 import React, { useRef } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -70,8 +71,9 @@ export function TodoItem({
               disabled && styles.timeBadgeDisabled,
             ]}
           >
+            <Clock size={12} color={disabled ? '#94a3b8' : '#64748b'} style={{ marginRight: 4 }} />
             <Text style={[styles.timeBadgeText, disabled && styles.timeBadgeTextDisabled]}>
-              ⏱️ {timeMinutes ?? 30} min
+              {timeMinutes ?? 30} min
             </Text>
           </View>
         </View>
@@ -155,6 +157,8 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f1f5f9',
     borderRadius: 6,
     paddingHorizontal: 8,

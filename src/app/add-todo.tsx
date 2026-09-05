@@ -1,3 +1,4 @@
+import { Clock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -88,7 +89,7 @@ export default function AddTodoScreen() {
 
         <View style={styles.timeInputRow}>
           <View style={styles.timeInputWrap}>
-            <Text style={styles.timeInputPrefix}>⏱️</Text>
+            <Clock size={18} color="#6366f1" style={{ marginRight: 6 }} />
             <TextInput
               style={styles.timeInput}
               placeholder="30"

@@ -1,0 +1,13 @@
+Next features to add: 
+----------------------
+
+0. Add timing option for each to do iteam for reminder
+1. Notification - with timing, also add test Notification in setting option - to check if Notification is working as expected
+2. UI - Improvement 
+3. Tabular view all todo item - monthy view
+4. Install and test it
+
+
+
+Features which are done: 
+------------------------

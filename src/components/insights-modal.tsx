@@ -1,15 +1,7 @@
 import React from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
+import { BarChart2, Check, CheckCircle2, Flame, Minus, Trophy, X, XCircle } from 'lucide-react-native';
 import { formatDateKey, getMonday, getTodoInsights, isTodoCompleted, Todo } from '@/context/todos-context';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -49,7 +41,8 @@ function ActivityInsightCard({ todo }: { todo: Todo }) {
         </View>
         {insights.currentStreak > 0 && (
           <View style={styles.activePill}>
-            <Text style={styles.activePillText}>🔥 Active</Text>
+            <Flame size={12} color="#d97706" style={{ marginRight: 3 }} />
+            <Text style={styles.activePillText}>Active</Text>
           </View>
         )}
       </View>
@@ -60,14 +53,20 @@ function ActivityInsightCard({ todo }: { todo: Todo }) {
       {/* Streaks Row */}
       <View style={styles.streaksContainer}>
         <View style={styles.streakBlock}>
-          <Text style={styles.streakLabel}>🔥 Current streak</Text>
+          <View style={styles.labelWithIcon}>
+            <Flame size={13} color="#d97706" style={{ marginRight: 4 }} />
+            <Text style={styles.streakLabel}>Current streak</Text>
+          </View>
           <Text style={styles.streakValue}>
             {insights.currentStreak} {insights.currentStreak === 1 ? 'day' : 'days'}
           </Text>
         </View>
         <View style={styles.streakSeparator} />
         <View style={styles.streakBlock}>
-          <Text style={styles.streakLabel}>🏆 Max streak</Text>
+          <View style={styles.labelWithIcon}>
+            <Trophy size={13} color="#ca8a04" style={{ marginRight: 4 }} />
+            <Text style={styles.streakLabel}>Max streak</Text>
+          </View>
           <Text style={styles.streakValue}>
             {insights.maxStreak} {insights.maxStreak === 1 ? 'day' : 'days'}
           </Text>
@@ -77,13 +76,19 @@ function ActivityInsightCard({ todo }: { todo: Todo }) {
       {/* Completion vs Missed Pill Row */}
       <View style={styles.ratesRow}>
         <View style={styles.ratePillDone}>
-          <Text style={styles.rateLabelDone}>Completed</Text>
+          <View style={styles.labelWithIcon}>
+            <CheckCircle2 size={13} color="#059669" style={{ marginRight: 4 }} />
+            <Text style={styles.rateLabelDone}>Completed</Text>
+          </View>
           <Text style={styles.rateValueDone}>
             {insights.completedCount} ({insights.completedPct}%)
           </Text>
         </View>
         <View style={styles.ratePillMissed}>
-          <Text style={styles.rateLabelMissed}>Missed</Text>
+          <View style={styles.labelWithIcon}>
+            <XCircle size={13} color="#dc2626" style={{ marginRight: 4 }} />
+            <Text style={styles.rateLabelMissed}>Missed</Text>
+          </View>
           <Text style={styles.rateValueMissed}>
             {insights.missedCount} ({insights.missedPct}%)
           </Text>
@@ -112,9 +117,8 @@ function ActivityInsightCard({ todo }: { todo: Todo }) {
         </View>
       </View>
 
-      {/* 7-Day Week History Section */}
+      {/* 7-Day History Badges Row (No heading text) */}
       <View style={styles.weekHistorySection}>
-        <Text style={styles.weekHistoryTitle}>📅 7-Day Week History (Mon - Sun)</Text>
         <View style={styles.weekHistoryRow}>
           {weekDays.map((day, index) => {
             const dayKey = formatDateKey(day);
@@ -142,16 +146,13 @@ function ActivityInsightCard({ todo }: { todo: Todo }) {
                     isFuture && styles.historyBadgeFuture,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.historyBadgeText,
-                      isCompleted && styles.historyBadgeTextDone,
-                      !isCompleted && !isFuture && styles.historyBadgeTextMissed,
-                      isFuture && styles.historyBadgeTextFuture,
-                    ]}
-                  >
-                    {isCompleted ? '✓' : isFuture ? '-' : '✕'}
-                  </Text>
+                  {isCompleted ? (
+                    <Check size={11} color="#ffffff" strokeWidth={3} />
+                  ) : isFuture ? (
+                    <Minus size={11} color="#94a3b8" strokeWidth={2.5} />
+                  ) : (
+                    <X size={11} color="#ef4444" strokeWidth={3} />
+                  )}
                 </View>
               </View>
             );
@@ -190,11 +191,14 @@ export function InsightsModal({ visible, onClose, todos }: InsightsModalProps) {
 
           {/* Modal Header */}
           <View style={styles.sheetHeader}>
-            <View>
-              <Text style={styles.sheetTitle}>Activity Insights</Text>
-              <Text style={styles.sheetSubtitle}>
-                {todos.length} {todos.length === 1 ? 'activity' : 'activities'} tracked
-              </Text>
+            <View style={styles.sheetHeaderTitleRow}>
+              <BarChart2 size={22} color="#6366f1" style={{ marginRight: 8 }} />
+              <View>
+                <Text style={styles.sheetTitle}>Activity Insights</Text>
+                <Text style={styles.sheetSubtitle}>
+                  {todos.length} {todos.length === 1 ? 'activity' : 'activities'} tracked
+                </Text>
+              </View>
             </View>
             <TouchableOpacity
               style={styles.closeBtn}
@@ -202,7 +206,7 @@ export function InsightsModal({ visible, onClose, todos }: InsightsModalProps) {
               hitSlop={12}
               activeOpacity={0.7}
             >
-              <Text style={styles.closeBtnText}>✕</Text>
+              <X size={18} color="#6366f1" strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
 
@@ -214,7 +218,7 @@ export function InsightsModal({ visible, onClose, todos }: InsightsModalProps) {
           >
             {todos.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>📊</Text>
+                <BarChart2 size={44} color="#94a3b8" style={{ marginBottom: 10 }} />
                 <Text style={styles.emptyText}>No activities yet</Text>
                 <Text style={styles.emptySubtext}>
                   Add tasks from the home screen to see detailed streak and completion stats here.
@@ -278,6 +282,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ede9fe',
   },
+  sheetHeaderTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   sheetTitle: {
     fontSize: 20,
     fontWeight: '800',
@@ -297,12 +305,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ede9fe',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  closeBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: PRIMARY,
-    lineHeight: 16,
   },
   scrollList: {
     flexGrow: 0,
@@ -349,6 +351,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   activePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fffbeb',
     borderColor: '#fde68a',
     borderWidth: 1,
@@ -377,6 +381,10 @@ const styles = StyleSheet.create({
   },
   streakBlock: {
     flex: 1,
+  },
+  labelWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   streakLabel: {
     fontSize: 11,
@@ -477,10 +485,6 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
-  emptyEmoji: {
-    fontSize: 44,
-    marginBottom: 10,
-  },
   emptyText: {
     fontSize: 16,
     fontWeight: '700',
@@ -494,18 +498,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   weekHistorySection: {
-    marginTop: 14,
-    paddingTop: 12,
+    marginTop: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
-  },
-  weekHistoryTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: TEXT_MUTED,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   weekHistoryRow: {
     flexDirection: 'row',
@@ -550,18 +546,5 @@ const styles = StyleSheet.create({
   },
   historyBadgeFuture: {
     backgroundColor: '#e2e8f0',
-  },
-  historyBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  historyBadgeTextDone: {
-    color: '#ffffff',
-  },
-  historyBadgeTextMissed: {
-    color: '#ef4444',
-  },
-  historyBadgeTextFuture: {
-    color: '#94a3b8',
   },
 });

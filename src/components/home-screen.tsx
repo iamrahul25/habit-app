@@ -1,3 +1,4 @@
+import { BarChart2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -258,7 +259,8 @@ export function HomeScreen() {
               onPress={() => setIsInsightsOpen(true)}
               activeOpacity={0.8}
             >
-              <Text style={styles.insightsButtonText}>📊 Insights</Text>
+              <BarChart2 size={14} color="#ffffff" style={{ marginRight: 4 }} />
+              <Text style={styles.insightsButtonText}>Insights</Text>
             </TouchableOpacity>
             {!isViewingToday && (
               <TouchableOpacity style={styles.todayButton} onPress={goToToday} activeOpacity={0.8}>
@@ -445,6 +447,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   insightsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.22)',
     paddingHorizontal: 11,
     paddingVertical: 6,

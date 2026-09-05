@@ -1,3 +1,4 @@
+import { Clock, Pencil, Trash2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React, { useRef } from 'react';
 import {
@@ -60,7 +61,8 @@ function TaskManageItem({
               {name}
             </Text>
             <View style={styles.timeBadge}>
-              <Text style={styles.timeBadgeText}>⏱️ {timeMinutes ?? 30} min</Text>
+              <Clock size={12} color="#64748b" style={{ marginRight: 4 }} />
+              <Text style={styles.timeBadgeText}>{timeMinutes ?? 30} min</Text>
             </View>
           </View>
         </View>
@@ -74,14 +76,14 @@ function TaskManageItem({
             onPressOut={handlePressOut}
             hitSlop={8}
           >
-            <Text style={styles.editBtnText}>✏️</Text>
+            <Pencil size={16} color="#4f46e5" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.deleteBtn}
             onPress={handleDelete}
             hitSlop={8}
           >
-            <Text style={styles.deleteBtnText}>🗑️</Text>
+            <Trash2 size={16} color="#ef4444" />
           </TouchableOpacity>
         </View>
       </View>
@@ -237,6 +239,8 @@ const styles = StyleSheet.create({
     color: TEXT,
   },
   timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: '#f1f5f9',
     borderRadius: 6,

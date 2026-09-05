@@ -1,3 +1,4 @@
+import { AlertTriangle, BarChart3, Copy, Eye, FileDown, FileText, FolderOpen, Share2, Trash2, Upload } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
@@ -227,7 +228,10 @@ export default function SettingsScreen() {
       >
         {/* Overview Stats Card */}
         <View style={styles.statsCard}>
-          <Text style={styles.sectionHeading}>📊 Data Summary</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <BarChart3 size={18} color="#6366f1" style={{ marginRight: 6 }} />
+            <Text style={styles.sectionHeading}>Data Summary</Text>
+          </View>
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>{totalHabits}</Text>
@@ -247,7 +251,7 @@ export default function SettingsScreen() {
         {/* Export Data Section */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardIcon}>📤</Text>
+            <Share2 size={24} color="#6366f1" style={{ marginTop: 2 }} />
             <View style={{ flex: 1 }}>
               <Text style={styles.cardTitle}>Export Data (JSON)</Text>
               <Text style={styles.cardSub}>
@@ -262,7 +266,8 @@ export default function SettingsScreen() {
               onPress={handleExportFile}
               activeOpacity={0.8}
             >
-              <Text style={styles.btnPrimaryText}>📁 Save JSON File</Text>
+              <FileDown size={16} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.btnPrimaryText}>Save JSON File</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -270,7 +275,8 @@ export default function SettingsScreen() {
               onPress={handleCopyClipboard}
               activeOpacity={0.8}
             >
-              <Text style={styles.btnSecondaryText}>📋 Copy JSON</Text>
+              <Copy size={16} color="#334155" style={{ marginRight: 6 }} />
+              <Text style={styles.btnSecondaryText}>Copy JSON</Text>
             </TouchableOpacity>
           </View>
 
@@ -279,14 +285,15 @@ export default function SettingsScreen() {
             onPress={() => setIsViewJsonOpen(true)}
             activeOpacity={0.7}
           >
-            <Text style={styles.inlineLinkText}>👁️ View / Inspect Raw JSON</Text>
+            <Eye size={14} color="#6366f1" style={{ marginRight: 4 }} />
+            <Text style={styles.inlineLinkText}>View / Inspect Raw JSON</Text>
           </TouchableOpacity>
         </View>
 
         {/* Import Data Section */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardIcon}>📥</Text>
+            <Upload size={24} color="#0284c7" style={{ marginTop: 2 }} />
             <View style={{ flex: 1 }}>
               <Text style={styles.cardTitle}>Import Data (JSON)</Text>
               <Text style={styles.cardSub}>
@@ -301,7 +308,8 @@ export default function SettingsScreen() {
               onPress={handlePickFile}
               activeOpacity={0.8}
             >
-              <Text style={styles.btnPrimaryText}>📂 Select JSON File</Text>
+              <FolderOpen size={16} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.btnPrimaryText}>Select JSON File</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -312,7 +320,8 @@ export default function SettingsScreen() {
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.btnSecondaryText}>📝 Paste Text</Text>
+              <FileText size={16} color="#334155" style={{ marginRight: 6 }} />
+              <Text style={styles.btnSecondaryText}>Paste Text</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -320,7 +329,7 @@ export default function SettingsScreen() {
         {/* Reset / Danger Zone */}
         <View style={[styles.card, styles.dangerCard]}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardIcon}>⚠️</Text>
+            <AlertTriangle size={24} color="#dc2626" style={{ marginTop: 2 }} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.cardTitle, { color: '#dc2626' }]}>Danger Zone</Text>
               <Text style={styles.cardSub}>
@@ -334,7 +343,8 @@ export default function SettingsScreen() {
             onPress={handleClearAll}
             activeOpacity={0.8}
           >
-            <Text style={styles.dangerBtnText}>🗑️ Clear All Habit Data</Text>
+            <Trash2 size={16} color="#ffffff" style={{ marginRight: 6 }} />
+            <Text style={styles.dangerBtnText}>Clear All Habit Data</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -602,6 +612,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderRadius: 10,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -624,6 +635,8 @@ const styles = StyleSheet.create({
   inlineLinkBtn: {
     marginTop: 12,
     alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   inlineLinkText: {
     fontSize: 13,
@@ -639,6 +652,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ef4444',
     height: 44,
     borderRadius: 10,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
