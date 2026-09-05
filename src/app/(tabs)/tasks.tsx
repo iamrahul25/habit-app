@@ -1,6 +1,6 @@
-import { Clock, Pencil, Trash2 } from 'lucide-react-native';
+import { Bell, Clock, Pencil, Trash2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Animated,
@@ -20,17 +20,23 @@ function TaskManageItem({
   name,
   icon,
   timeMinutes,
+  notificationTime,
+  notificationEnabled,
   onEdit,
   onDelete,
+  onToggleNotification,
 }: {
   id: string;
   name: string;
   icon: string;
   timeMinutes?: number;
+  notificationTime?: string;
+  notificationEnabled?: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onToggleNotification: () => void;
 }) {
-  const scaleAnim = useRef(new Animated.Value(1));
+  const [scaleAnim] = useState(() => new Animated.Value(1));
 
   const handleDelete = () => {
     Alert.alert(
@@ -44,14 +50,14 @@ function TaskManageItem({
   };
 
   const handlePressIn = () => {
-    Animated.timing(scaleAnim.current, { toValue: 0.98, duration: 60, useNativeDriver: true }).start();
+    Animated.timing(scaleAnim, { toValue: 0.98, duration: 60, useNativeDriver: true }).start();
   };
   const handlePressOut = () => {
-    Animated.timing(scaleAnim.current, { toValue: 1, duration: 60, useNativeDriver: true }).start();
+    Animated.timing(scaleAnim, { toValue: 1, duration: 60, useNativeDriver: true }).start();
   };
 
   return (
-    <Animated.View style={[styles.taskCard, { transform: [{ scale: scaleAnim.current }] }]}>
+    <Animated.View style={[styles.taskCard, { transform: [{ scale: scaleAnim }] }]}>
       <View style={styles.taskRow}>
         {/* Icon + name + time */}
         <View style={styles.taskLeft}>
@@ -60,15 +66,31 @@ function TaskManageItem({
             <Text style={styles.taskName} numberOfLines={1}>
               {name}
             </Text>
-            <View style={styles.timeBadge}>
-              <Clock size={12} color="#64748b" style={{ marginRight: 4 }} />
-              <Text style={styles.timeBadgeText}>{timeMinutes ?? 30} min</Text>
+            <View style={styles.badgesRow}>
+              {notificationTime ? (
+                <Text style={styles.timingSubtext}>⏰ {notificationTime}</Text>
+              ) : null}
+              <View style={styles.timeBadge}>
+                <Clock size={11} color="#64748b" style={{ marginRight: 3 }} />
+                <Text style={styles.timeBadgeText}>{timeMinutes ?? 30}m</Text>
+              </View>
             </View>
           </View>
         </View>
 
         {/* Actions */}
         <View style={styles.taskActions}>
+          <TouchableOpacity
+            style={[
+              styles.bellBtn,
+              notificationEnabled && styles.bellBtnActive,
+            ]}
+            onPress={onToggleNotification}
+            hitSlop={6}
+          >
+            <Bell size={16} color={notificationEnabled ? '#6366f1' : '#94a3b8'} />
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.editBtn}
             onPress={onEdit}
@@ -78,6 +100,7 @@ function TaskManageItem({
           >
             <Pencil size={16} color="#4f46e5" />
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.deleteBtn}
             onPress={handleDelete}
@@ -92,7 +115,7 @@ function TaskManageItem({
 }
 
 export default function TasksScreen() {
-  const { todos, isLoaded, deleteTodo } = useTodos();
+  const { todos, isLoaded, deleteTodo, toggleTodoNotification } = useTodos();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -135,10 +158,13 @@ export default function TasksScreen() {
               name={todo.name}
               icon={todo.icon}
               timeMinutes={todo.timeMinutes}
+              notificationTime={todo.notificationTime}
+              notificationEnabled={todo.notificationEnabled}
               onEdit={() =>
                 router.push({ pathname: '/edit-todo', params: { id: todo.id } })
               }
               onDelete={() => deleteTodo(todo.id)}
+              onToggleNotification={() => toggleTodoNotification(todo.id)}
             />
           ))
         )}
@@ -152,7 +178,6 @@ const BG = '#f8f7ff';
 const CARD = '#ffffff';
 const TEXT = '#1e1b4b';
 const SUBTEXT = '#6b7280';
-const GREEN = '#10b981';
 
 const styles = StyleSheet.create({
   root: {
@@ -238,15 +263,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: TEXT,
   },
+  badgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  timingSubtext: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6366f1',
+  },
   timeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     backgroundColor: '#f1f5f9',
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    marginTop: 4,
   },
   timeBadgeText: {
     fontSize: 11,
@@ -256,7 +290,20 @@ const styles = StyleSheet.create({
   taskActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+  },
+  bellBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellBtnActive: {
+    backgroundColor: '#eef2ff',
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
   },
   editBtn: {
     width: 36,
@@ -266,9 +313,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  editBtnText: {
-    fontSize: 16,
-  },
   deleteBtn: {
     width: 36,
     height: 36,
@@ -276,8 +320,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#fef2f2',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  deleteBtnText: {
-    fontSize: 16,
   },
 });

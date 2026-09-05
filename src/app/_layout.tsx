@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { TodosProvider } from '@/context/todos-context';
+import '@/utils/notifications';
 
 export default function RootLayout() {
   return (

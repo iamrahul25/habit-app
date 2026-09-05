@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+import { cancelTaskNotification, scheduleTaskNotification } from '@/utils/notifications';
+
 export interface Todo {
   id: string;
   name: string;
@@ -9,6 +11,9 @@ export interface Todo {
   createdAt?: string;
   completions?: Record<string, boolean>;
   completed?: boolean;
+  notificationTime?: string;
+  notificationEnabled?: boolean;
+  notificationId?: string;
 }
 
 export interface TodoInsights {
@@ -213,10 +218,24 @@ export function getTodoInsights(todo: Todo): TodoInsights {
 interface TodosContextType {
   todos: Todo[];
   isLoaded: boolean;
-  addTodo: (name: string, icon: string, timeMinutes?: number) => void;
+  addTodo: (
+    name: string,
+    icon: string,
+    timeMinutes?: number,
+    notificationTime?: string,
+    notificationEnabled?: boolean
+  ) => Promise<void>;
   toggleTodo: (id: string, dateKey?: string) => void;
   deleteTodo: (id: string) => void;
-  editTodo: (id: string, name: string, icon: string, timeMinutes?: number) => void;
+  editTodo: (
+    id: string,
+    name: string,
+    icon: string,
+    timeMinutes?: number,
+    notificationTime?: string,
+    notificationEnabled?: boolean
+  ) => Promise<void>;
+  toggleTodoNotification: (id: string) => Promise<void>;
   isTodoCompleted: (todo: Todo, dateKey?: string) => boolean;
   exportData: () => string;
   importData: (
@@ -257,6 +276,9 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
             timeMinutes,
             createdAt: t.createdAt || new Date().toISOString(),
             completions,
+            notificationTime: t.notificationTime || '09:00 AM',
+            notificationEnabled: typeof t.notificationEnabled === 'boolean' ? t.notificationEnabled : false,
+            notificationId: t.notificationId,
           };
         });
 
@@ -278,18 +300,36 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
     );
   }, [todos, isLoaded]);
 
-  const addTodo = (name: string, icon: string, timeMinutes?: number) => {
+  const addTodo = async (
+    name: string,
+    icon: string,
+    timeMinutes?: number,
+    notificationTime?: string,
+    notificationEnabled?: boolean
+  ) => {
     const minutes =
       typeof timeMinutes === 'number' && !isNaN(timeMinutes) && timeMinutes > 0
         ? timeMinutes
         : 30;
+    const id = Date.now().toString();
+    const timeStr = notificationTime || '09:00 AM';
+    let schedId: string | undefined = undefined;
+
+    if (notificationEnabled) {
+      const res = await scheduleTaskNotification(id, name.trim(), timeStr);
+      if (res) schedId = res;
+    }
+
     const newTodo: Todo = {
-      id: Date.now().toString(),
+      id,
       name: name.trim(),
       icon,
       timeMinutes: minutes,
       createdAt: new Date().toISOString(),
       completions: {},
+      notificationTime: timeStr,
+      notificationEnabled: !!notificationEnabled,
+      notificationId: schedId,
     };
     setTodos((prev) => [...prev, newTodo]);
   };
@@ -313,19 +353,86 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteTodo = (id: string) => {
+    const target = todos.find((t) => t.id === id);
+    if (target?.notificationId) {
+      cancelTaskNotification(target.notificationId);
+    }
     setTodos((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const editTodo = (id: string, name: string, icon: string, timeMinutes?: number) => {
+  const editTodo = async (
+    id: string,
+    name: string,
+    icon: string,
+    timeMinutes?: number,
+    notificationTime?: string,
+    notificationEnabled?: boolean
+  ) => {
     const minutes =
       typeof timeMinutes === 'number' && !isNaN(timeMinutes) && timeMinutes > 0
         ? timeMinutes
         : 30;
+    const timeStr = notificationTime || '09:00 AM';
+
+    const existing = todos.find((t) => t.id === id);
+    if (existing?.notificationId) {
+      await cancelTaskNotification(existing.notificationId);
+    }
+
+    let schedId: string | undefined = undefined;
+    if (notificationEnabled) {
+      const res = await scheduleTaskNotification(id, name.trim(), timeStr);
+      if (res) schedId = res;
+    }
+
     setTodos((prev) =>
       prev.map((t) =>
-        t.id === id ? { ...t, name: name.trim(), icon, timeMinutes: minutes } : t
+        t.id === id
+          ? {
+              ...t,
+              name: name.trim(),
+              icon,
+              timeMinutes: minutes,
+              notificationTime: timeStr,
+              notificationEnabled: !!notificationEnabled,
+              notificationId: schedId,
+            }
+          : t
       )
     );
+  };
+
+  const toggleTodoNotification = async (id: string) => {
+    const target = todos.find((t) => t.id === id);
+    if (!target) return;
+
+    if (target.notificationEnabled) {
+      if (target.notificationId) {
+        await cancelTaskNotification(target.notificationId);
+      }
+      setTodos((prev) =>
+        prev.map((t) =>
+          t.id === id
+            ? { ...t, notificationEnabled: false, notificationId: undefined }
+            : t
+        )
+      );
+    } else {
+      const timing = target.notificationTime || '09:00 AM';
+      const schedId = await scheduleTaskNotification(id, target.name, timing);
+      setTodos((prev) =>
+        prev.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                notificationEnabled: true,
+                notificationTime: timing,
+                notificationId: schedId || undefined,
+              }
+            : t
+        )
+      );
+    }
   };
 
   const exportData = (): string => {
@@ -400,6 +507,9 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
           timeMinutes,
           createdAt: item.createdAt ? String(item.createdAt) : new Date().toISOString(),
           completions,
+          notificationTime: item.notificationTime || '09:00 AM',
+          notificationEnabled: typeof item.notificationEnabled === 'boolean' ? item.notificationEnabled : false,
+          notificationId: item.notificationId,
         });
       }
 
@@ -430,6 +540,12 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
                 name: imp.name || existing.name,
                 icon: imp.icon || existing.icon,
                 timeMinutes: imp.timeMinutes || existing.timeMinutes,
+                notificationTime: imp.notificationTime || existing.notificationTime,
+                notificationEnabled:
+                  typeof imp.notificationEnabled === 'boolean'
+                    ? imp.notificationEnabled
+                    : existing.notificationEnabled,
+                notificationId: imp.notificationId || existing.notificationId,
                 completions: {
                   ...(existing.completions || {}),
                   ...(imp.completions || {}),
@@ -467,6 +583,12 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearAllData = () => {
+    // Cancel all scheduled notifications
+    todos.forEach((t) => {
+      if (t.notificationId) {
+        cancelTaskNotification(t.notificationId);
+      }
+    });
     setTodos([]);
   };
 
@@ -479,6 +601,7 @@ export function TodosProvider({ children }: { children: React.ReactNode }) {
         toggleTodo,
         deleteTodo,
         editTodo,
+        toggleTodoNotification,
         isTodoCompleted,
         exportData,
         importData,

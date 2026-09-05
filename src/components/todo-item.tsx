@@ -1,31 +1,37 @@
-import { Clock } from 'lucide-react-native';
-import React, { useRef } from 'react';
+import { Bell, Clock } from 'lucide-react-native';
+import React, { useState } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface TodoItemProps {
   name: string;
   icon: string;
   timeMinutes?: number;
+  notificationTime?: string;
+  notificationEnabled?: boolean;
   completed: boolean;
   disabled?: boolean;
   onToggle: () => void;
+  onToggleNotification?: () => void;
 }
 
 export function TodoItem({
   name,
   icon,
   timeMinutes,
+  notificationTime,
+  notificationEnabled,
   completed,
   disabled = false,
   onToggle,
+  onToggleNotification,
 }: TodoItemProps) {
-  const scaleAnim = useRef(new Animated.Value(1));
+  const [scaleAnim] = useState(() => new Animated.Value(1));
 
   const handleToggle = () => {
     if (disabled) return;
     Animated.sequence([
-      Animated.timing(scaleAnim.current, { toValue: 0.95, duration: 80, useNativeDriver: true }),
-      Animated.timing(scaleAnim.current, { toValue: 1, duration: 80, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 0.95, duration: 80, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
     ]).start();
     onToggle();
   };
@@ -34,7 +40,7 @@ export function TodoItem({
     <Animated.View
       style={[
         styles.todoCard,
-        { transform: [{ scale: scaleAnim.current }] },
+        { transform: [{ scale: scaleAnim }] },
         disabled && styles.todoCardDisabled,
       ]}
     >
@@ -55,26 +61,53 @@ export function TodoItem({
         </View>
         <Text style={[styles.todoIcon, disabled && styles.todoIconDisabled]}>{icon}</Text>
         <View style={styles.todoInfoWrap}>
-          <Text
-            style={[
-              styles.todoName,
-              completed && styles.todoNameDone,
-              disabled && styles.todoNameDisabled,
-            ]}
-          >
-            {name}
-          </Text>
-          <View
-            style={[
-              styles.timeBadge,
-              completed && styles.timeBadgeDone,
-              disabled && styles.timeBadgeDisabled,
-            ]}
-          >
-            <Clock size={12} color={disabled ? '#94a3b8' : '#64748b'} style={{ marginRight: 4 }} />
-            <Text style={[styles.timeBadgeText, disabled && styles.timeBadgeTextDisabled]}>
-              {timeMinutes ?? 30} min
+          <View style={{ flex: 1, marginRight: 8 }}>
+            <Text
+              style={[
+                styles.todoName,
+                completed && styles.todoNameDone,
+                disabled && styles.todoNameDisabled,
+              ]}
+              numberOfLines={1}
+            >
+              {name}
             </Text>
+            {notificationTime ? (
+              <Text style={styles.timingSubtext}>
+                ⏰ {notificationTime}
+              </Text>
+            ) : null}
+          </View>
+
+          <View style={styles.badgesRow}>
+            {onToggleNotification && (
+              <TouchableOpacity
+                style={[
+                  styles.bellBtn,
+                  notificationEnabled && styles.bellBtnActive,
+                ]}
+                onPress={onToggleNotification}
+                hitSlop={6}
+              >
+                <Bell
+                  size={12}
+                  color={notificationEnabled ? '#6366f1' : '#94a3b8'}
+                />
+              </TouchableOpacity>
+            )}
+
+            <View
+              style={[
+                styles.timeBadge,
+                completed && styles.timeBadgeDone,
+                disabled && styles.timeBadgeDisabled,
+              ]}
+            >
+              <Clock size={11} color={disabled ? '#94a3b8' : '#64748b'} style={{ marginRight: 3 }} />
+              <Text style={[styles.timeBadgeText, disabled && styles.timeBadgeTextDisabled]}>
+                {timeMinutes ?? 30}m
+              </Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -143,11 +176,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   todoName: {
-    flex: 1,
     fontSize: 15,
     fontWeight: '600',
     color: TEXT,
-    marginRight: 8,
   },
   todoNameDone: {
     textDecorationLine: 'line-through',
@@ -156,13 +187,37 @@ const styles = StyleSheet.create({
   todoNameDisabled: {
     color: '#64748b',
   },
+  timingSubtext: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6366f1',
+    marginTop: 2,
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  bellBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellBtnActive: {
+    backgroundColor: '#eef2ff',
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+  },
   timeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f1f5f9',
     borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
   },
   timeBadgeDone: {
     backgroundColor: '#f8fafc',

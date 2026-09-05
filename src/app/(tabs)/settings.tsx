@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, Copy, Eye, FileDown, FileText, FolderOpen, Share2, Trash2, Upload } from 'lucide-react-native';
+import { AlertTriangle, BarChart3, Bell, Copy, Eye, FileDown, FileText, FolderOpen, Share2, Trash2, Upload } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTodos } from '@/context/todos-context';
+import { sendTestNotification } from '@/utils/notifications';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -185,6 +186,19 @@ export default function SettingsScreen() {
     }
   };
 
+  // TEST NOTIFICATION HANDLER
+  const handleTestNotification = async () => {
+    const success = await sendTestNotification();
+    if (success) {
+      showToast('🔔 Test notification sent! Check your notification bar.');
+    } else {
+      Alert.alert(
+        'Notification Info',
+        'Push notifications require a development build or granted permissions. Ensure notifications are enabled in your device settings.'
+      );
+    }
+  };
+
   // CLEAR ALL HANDLER
   const handleClearAll = () => {
     Alert.alert(
@@ -324,6 +338,28 @@ export default function SettingsScreen() {
               <Text style={styles.btnSecondaryText}>Paste Text</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Push Notifications Section */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Bell size={24} color="#6366f1" style={{ marginTop: 2 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>Push Notifications</Text>
+              <Text style={styles.cardSub}>
+                Test push notifications to make sure scheduled task reminders will trigger on time.
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.btn, styles.btnPrimary]}
+            onPress={handleTestNotification}
+            activeOpacity={0.8}
+          >
+            <Bell size={16} color="#ffffff" style={{ marginRight: 6 }} />
+            <Text style={styles.btnPrimaryText}>Test Notification</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Reset / Danger Zone */}

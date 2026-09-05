@@ -1,4 +1,4 @@
-import { Clock } from 'lucide-react-native';
+import { Bell, Clock } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -27,6 +28,15 @@ const ICONS = [
 
 const TIME_PRESETS = [15, 30, 45, 60];
 
+const SCHEDULE_TIMING_PRESETS = [
+  '6:00 AM',
+  '8:00 AM',
+  '10:00 AM',
+  '1:00 PM',
+  '6:00 PM',
+  '10:30 PM',
+];
+
 export default function EditTodoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -38,6 +48,10 @@ export default function EditTodoScreen() {
   const [name, setName] = useState(todo?.name ?? '');
   const [time, setTime] = useState(String(todo?.timeMinutes ?? 30));
   const [selectedIcon, setSelectedIcon] = useState<string>(todo?.icon ?? '✅');
+  const [scheduledTime, setScheduledTime] = useState<string>(todo?.notificationTime ?? '06:00 AM');
+  const [notificationEnabled, setNotificationEnabled] = useState<boolean>(
+    todo?.notificationEnabled ?? false
+  );
 
   if (!todo) {
     return (
@@ -52,11 +66,18 @@ export default function EditTodoScreen() {
 
   const canSave = name.trim().length > 0;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave) return;
     const parsed = parseInt(time.trim(), 10);
     const minutes = !isNaN(parsed) && parsed > 0 ? parsed : 30;
-    editTodo(id, name.trim(), selectedIcon, minutes);
+    await editTodo(
+      id,
+      name.trim(),
+      selectedIcon,
+      minutes,
+      scheduledTime.trim() || '06:00 AM',
+      notificationEnabled
+    );
     router.back();
   };
 
@@ -93,9 +114,70 @@ export default function EditTodoScreen() {
           autoFocus
         />
 
-        {/* Time duration input */}
+        {/* Task Scheduled Time */}
         <View style={styles.timeSectionHeader}>
-          <Text style={styles.sectionLabel}>Time to complete</Text>
+          <Text style={styles.sectionLabel}>Timing to do that task</Text>
+          <Text style={styles.timeDefaultHint}>e.g. 6:00 AM, 10:30 PM</Text>
+        </View>
+
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. 6:00 AM, 10:30 PM"
+          placeholderTextColor="#9ca3af"
+          value={scheduledTime}
+          onChangeText={setScheduledTime}
+        />
+
+        {/* Schedule Preset Chips */}
+        <View style={styles.timingPresetsWrap}>
+          {SCHEDULE_TIMING_PRESETS.map((preset) => {
+            const isSelected = scheduledTime.trim().toUpperCase() === preset.toUpperCase();
+            return (
+              <TouchableOpacity
+                key={preset}
+                style={[styles.timingChip, isSelected && styles.timingChipSelected]}
+                onPress={() => setScheduledTime(preset)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.timingChipText,
+                    isSelected && styles.timingChipTextSelected,
+                  ]}
+                >
+                  {preset}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Notification Option Toggle */}
+        <View style={styles.notificationToggleCard}>
+          <View style={styles.notificationToggleLeft}>
+            <View style={styles.bellIconWrap}>
+              <Bell size={20} color={notificationEnabled ? '#6366f1' : '#94a3b8'} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.notificationToggleTitle}>Push Notification Alert</Text>
+              <Text style={styles.notificationToggleSub}>
+                {notificationEnabled
+                  ? `Push-down pop banner at ${scheduledTime || '06:00 AM'}`
+                  : 'Notifications disabled for this task'}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={notificationEnabled}
+            onValueChange={setNotificationEnabled}
+            trackColor={{ false: '#cbd5e1', true: '#c7d2fe' }}
+            thumbColor={notificationEnabled ? '#6366f1' : '#f8fafc'}
+          />
+        </View>
+
+        {/* Time duration input */}
+        <View style={[styles.timeSectionHeader, { marginTop: 12 }]}>
+          <Text style={styles.sectionLabel}>Estimated Duration</Text>
           <Text style={styles.timeDefaultHint}>(default 30 min)</Text>
         </View>
 
@@ -258,7 +340,70 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     color: TEXT,
-    marginBottom: 18,
+    marginBottom: 12,
+  },
+  timingPresetsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  timingChip: {
+    backgroundColor: '#f3f4f6',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: BORDER,
+  },
+  timingChipSelected: {
+    backgroundColor: PURPLE_LIGHT,
+    borderColor: PURPLE,
+  },
+  timingChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: SUBTEXT,
+  },
+  timingChipTextSelected: {
+    color: PURPLE,
+    fontWeight: '700',
+  },
+  notificationToggleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  notificationToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    marginRight: 8,
+  },
+  bellIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#eef2ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationToggleTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: TEXT,
+  },
+  notificationToggleSub: {
+    fontSize: 12,
+    color: SUBTEXT,
+    marginTop: 2,
   },
   timeSectionHeader: {
     flexDirection: 'row',
@@ -287,10 +432,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 48,
     flex: 1,
-  },
-  timeInputPrefix: {
-    fontSize: 16,
-    marginRight: 6,
   },
   timeInput: {
     flex: 1,
@@ -372,4 +513,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 });
-

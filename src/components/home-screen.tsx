@@ -1,6 +1,5 @@
 import { BarChart2 } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Animated,
   ScrollView,
@@ -125,7 +124,7 @@ function DayProgressRing({
 
 function ProgressBar({ done, total, label }: { done: number; total: number; label: string }) {
   const pct = total === 0 ? 0 : done / total;
-  const animatedWidth = useRef(new Animated.Value(0)).current;
+  const [animatedWidth] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     Animated.timing(animatedWidth, {
@@ -133,7 +132,7 @@ function ProgressBar({ done, total, label }: { done: number; total: number; labe
       duration: 400,
       useNativeDriver: false,
     }).start();
-  }, [pct]);
+  }, [pct, animatedWidth]);
 
   return (
     <View style={styles.progressContainer}>
@@ -164,7 +163,7 @@ function ProgressBar({ done, total, label }: { done: number; total: number; labe
 }
 
 export function HomeScreen() {
-  const { todos, isLoaded, toggleTodo } = useTodos();
+  const { todos, isLoaded, toggleTodo, toggleTodoNotification } = useTodos();
   const insets = useSafeAreaInsets();
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
@@ -379,6 +378,8 @@ export function HomeScreen() {
                 name={todo.name}
                 icon={todo.icon}
                 timeMinutes={todo.timeMinutes}
+                notificationTime={todo.notificationTime}
+                notificationEnabled={todo.notificationEnabled}
                 completed={completed}
                 disabled={isFutureDate}
                 onToggle={() => {
@@ -386,6 +387,7 @@ export function HomeScreen() {
                     toggleTodo(todo.id, selectedDateKey);
                   }
                 }}
+                onToggleNotification={() => toggleTodoNotification(todo.id)}
               />
             );
           })

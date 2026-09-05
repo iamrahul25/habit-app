@@ -5,7 +5,8 @@ Next features to add:
 1. Notification - with timing, also add test Notification in setting option - to check if Notification is working as expected
 2. UI - Improvement 
 3. Tabular view all todo item - monthy view
-4. Install and test it
+4. Generate .apk file and Install & Test it
+5. Make the icon for todo task -> Generic -> Means more icons option instead static x number of icons.
 
 
 
