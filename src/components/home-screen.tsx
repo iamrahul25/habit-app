@@ -387,7 +387,6 @@ export function HomeScreen() {
                     toggleTodo(todo.id, selectedDateKey);
                   }
                 }}
-                onToggleNotification={() => toggleTodoNotification(todo.id)}
               />
             );
           })

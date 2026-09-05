@@ -35,7 +35,20 @@ export function BottomNav({ activeTab: propsActiveTab, state, navigation }: Bott
   return (
     <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       <View style={styles.bottomNav}>
-        {/* 1. Home Tab */}
+        {/* 1. Add (+) Button */}
+        <View style={styles.navItem}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.addButton,
+              pressed && { transform: [{ scale: 0.92 }] },
+            ]}
+            onPress={() => router.push('/add-todo')}
+          >
+            <Plus size={24} color="#ffffff" strokeWidth={2.8} />
+          </Pressable>
+        </View>
+
+        {/* 2. Home Tab */}
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => currentTab !== 'home' && navigateToTab('index')}
@@ -53,7 +66,7 @@ export function BottomNav({ activeTab: propsActiveTab, state, navigation }: Bott
           </Text>
         </TouchableOpacity>
 
-        {/* 2. Tasks Tab */}
+        {/* 3. Tasks Tab */}
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => currentTab !== 'tasks' && navigateToTab('tasks')}
@@ -70,19 +83,6 @@ export function BottomNav({ activeTab: propsActiveTab, state, navigation }: Bott
             Tasks
           </Text>
         </TouchableOpacity>
-
-        {/* 3. Add (+) Button */}
-        <View style={styles.navItem}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.addButton,
-              pressed && { transform: [{ scale: 0.92 }] },
-            ]}
-            onPress={() => router.push('/add-todo')}
-          >
-            <Plus size={24} color="#ffffff" strokeWidth={2.8} />
-          </Pressable>
-        </View>
 
         {/* 4. Setting Tab */}
         <TouchableOpacity

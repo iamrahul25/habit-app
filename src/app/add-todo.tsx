@@ -1,6 +1,6 @@
-import { Bell, Clock } from 'lucide-react-native';
+import { Bell, Clock, Search } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -16,15 +16,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { EmojiPickerModal } from '@/components/emoji-picker-modal';
 import { useTodos } from '@/context/todos-context';
-
-const ICONS = [
-  '🏃', '📚', '💧', '🍎', '💪', '😴',
-  '🧘', '✍️', '🎯', '🎵', '🍳', '🌿',
-  '💊', '🧹', '🛒', '💰', '🎨', '🐕',
-  '☕', '🌅', '🏋️', '🚴', '🤸', '🧠',
-  '📝', '🛁', '🪴', '🎮', '📸', '🤝',
-];
+import { POPULAR_EMOJIS } from '@/utils/emoji-data';
 
 const TIME_PRESETS = [15, 30, 45, 60];
 
@@ -47,10 +41,20 @@ export default function AddTodoScreen() {
   const [name, setName] = useState('');
   const [time, setTime] = useState('30');
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
+  const [isEmojiModalOpen, setIsEmojiModalOpen] = useState(false);
 
   // Scheduled timing & notification toggle state
   const [scheduledTime, setScheduledTime] = useState('06:00 AM');
   const [notificationEnabled, setNotificationEnabled] = useState(true);
+
+  // Derive quick icons list ensuring selectedIcon is included if custom
+  const quickIcons = useMemo(() => {
+    const defaultList = POPULAR_EMOJIS.slice(0, 11);
+    if (selectedIcon && !defaultList.includes(selectedIcon)) {
+      return [selectedIcon, ...defaultList.slice(0, 10)];
+    }
+    return defaultList;
+  }, [selectedIcon]);
 
   const canAdd = name.trim().length > 0;
 
@@ -208,10 +212,21 @@ export default function AddTodoScreen() {
           </View>
         </View>
 
-        {/* Icon picker */}
-        <Text style={[styles.sectionLabel, { marginTop: 8 }]}>Pick an icon</Text>
+        {/* Icon picker header */}
+        <View style={styles.iconSectionHeader}>
+          <Text style={[styles.sectionLabel, { marginBottom: 0 }]}>Pick an icon</Text>
+          <TouchableOpacity
+            style={styles.searchMoreBtn}
+            onPress={() => setIsEmojiModalOpen(true)}
+            activeOpacity={0.7}
+          >
+            <Search size={14} color="#6366f1" style={{ marginRight: 4 }} />
+            <Text style={styles.searchMoreBtnText}>Search & More</Text>
+          </TouchableOpacity>
+        </View>
+
         <FlatList
-          data={ICONS}
+          data={quickIcons}
           keyExtractor={(item) => item}
           numColumns={6}
           scrollEnabled={false}
@@ -241,6 +256,14 @@ export default function AddTodoScreen() {
           <Text style={styles.addBtnText}>Add Task</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Full Searchable Emoji Picker Modal */}
+      <EmojiPickerModal
+        visible={isEmojiModalOpen}
+        onClose={() => setIsEmojiModalOpen(false)}
+        onSelectEmoji={(emoji) => setSelectedIcon(emoji)}
+        selectedEmoji={selectedIcon}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -436,6 +459,28 @@ const styles = StyleSheet.create({
     color: SUBTEXT,
   },
   presetChipTextSelected: {
+    color: PURPLE,
+  },
+  iconSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  searchMoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: PURPLE_LIGHT,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+  },
+  searchMoreBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
     color: PURPLE,
   },
   iconGrid: {
