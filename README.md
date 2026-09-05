@@ -43,6 +43,25 @@ cd android
 ```
 *(On macOS/Linux, use `./gradlew assembleRelease`)*
 
+### Copy Release APK to `build-apk`
+
+To copy the generated release APK from the Android build output folder to `habit-app\build-apk\app-release.apk`:
+
+**PowerShell (Windows):**
+```powershell
+mkdir -Force build-apk; Copy-Item android\app\build\outputs\apk\release\app-release.apk build-apk\app-release.apk
+```
+
+**CMD (Windows):**
+```cmd
+if not exist build-apk mkdir build-apk && copy android\app\build\outputs\apk\release\app-release.apk build-apk\app-release.apk
+```
+
+**Bash (macOS/Linux):**
+```bash
+mkdir -p build-apk && cp android/app/build/outputs/apk/release/app-release.apk build-apk/app-release.apk
+```
+
 ## Get a fresh project
 
 When you're ready, run:
